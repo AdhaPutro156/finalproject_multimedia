@@ -119,3 +119,122 @@ def overlay_image(background, overlay, position):
         background[y:y + h, x:x + w] = overlay
 
     return background
+
+# Fungsi utama
+def main():
+    cap = cv2.VideoCapture(0)
+    selected_players = []
+    current_position_index = 0
+    debounce_time = 1.0  # Waktu debounce dalam detik (dikurangi)
+    cooldown_time = 0.5  # Waktu cooldown tambahan setelah pemilihan (dikurangi)
+    last_selection_time = time.time()
+
+    stability_threshold = 5  # Jumlah frame yang stabil untuk konfirmasi
+    stable_count = 0  # Hitungan stabilitas arah
+
+    previous_angle_direction = None
+
+    with mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Konversi frame ke RGB
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = face_mesh.process(frame_rgb)
+
+            # Jika ada wajah yang terdeteksi
+            if results.multi_face_landmarks:
+                for face_landmarks in results.multi_face_landmarks:
+                    nose_tip = face_landmarks.landmark[1]
+                    left_cheek = face_landmarks.landmark[234]
+                    right_cheek = face_landmarks.landmark[454]
+                    top_head = face_landmarks.landmark[10]  # Titik atas kepala
+
+                    # Hitung pusat wajah
+                    face_center_x = (left_cheek.x + right_cheek.x) / 2
+                    head_angle = calculate_head_angle(nose_tip, face_center_x)
+
+                    # Ambang batas sudut kepala untuk deteksi gerakan
+                    angle_threshold = 15  # Ambang batas lebih kecil untuk sensitivitas yang lebih tinggi
+
+                    # Pilihan berdasarkan arah kepala
+                    current_time = time.time()
+                    direction = None
+                    if head_angle > angle_threshold:
+                        direction = "right"
+                    elif head_angle < -angle_threshold:
+                        direction = "left"
+
+                    # Hitung stabilitas arah
+                    if direction == previous_angle_direction:
+                        stable_count += 1
+                    else:
+                        stable_count = 0  # Reset jika arah berubah
+
+                    previous_angle_direction = direction
+
+                    if stable_count >= stability_threshold and current_position_index < len(positions):
+                        if current_time - last_selection_time >= cooldown_time:  # Tambahkan cooldown
+                            if direction == "right":  # Kepala ke kanan
+                                selected_players.append(positions[current_position_index]["options"][1])
+                                current_position_index += 1
+                            elif direction == "left":  # Kepala ke kiri
+                                selected_players.append(positions[current_position_index]["options"][0])
+                                current_position_index += 1
+
+                            last_selection_time = current_time
+                            stable_count = 0  # Reset stabilitas
+
+                    # Tampilkan gambar di atas kepala
+                    frame_height, frame_width, _ = frame.shape
+                    text_position_left = (
+                        int(top_head.x * frame_width) - 200,
+                        int((top_head.y - 0.1) * frame_height)
+                    )
+                    text_position_right = (
+                        int(top_head.x * frame_width) + 50,
+                        int((top_head.y - 0.1) * frame_height)
+                    )
+
+                    # Tampilkan gambar pilihan kiri dan kanan
+                    if current_position_index < len(positions):
+                        position = positions[current_position_index]
+                        left_image = player_images[position["options"][0]]
+                        right_image = player_images[position["options"][1]]
+
+                        # Tempelkan gambar di posisi yang sesuai
+                        frame = overlay_image(frame, left_image, (text_position_left[0], text_position_left[1]))
+                        frame = overlay_image(frame, right_image, (text_position_right[0], text_position_right[1]))
+
+            # Menampilkan informasi posisi yang tetap di bagian atas
+            if current_position_index < len(positions):
+                position = positions[current_position_index]
+                # Hanya menampilkan nama posisi (misalnya: Posisi: GK)
+                info_position_text = f"Posisi: {position['name']}"
+                cv2.putText(frame, info_position_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+            # Jika semua pemain sudah dipilih
+            if current_position_index >= len(positions):
+                frame = create_field_with_players(selected_players, frame)
+                # Simpan hasil pemilihan pemain ke file JPG
+                cv2.imwrite("starting_eleven_custom_form.jpg", frame)
+
+                cv2.imshow("Starting Eleven", frame)
+                # Tampilkan hasil selama 10 detik sebelum keluar
+                cv2.waitKey(10000)
+                break
+
+            # Tampilkan frame
+            cv2.imshow("Starting Eleven Selection", frame)
+
+            # Keluar dengan 'q'
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
