@@ -76,3 +76,9 @@ Ignatius Julio Bintang Regen - 121140192
 - Simpan kode dalam file starting_eleven.py, lalu jalankan program dengan perintah:
 Copy code di terminal
 '''python starting_eleven.py'''
+
+## Penggunaan Program
+1. Pastikan kamera aktif dan dapat digunakan.
+2. Program akan menampilkan dua gambar pemain bola.
+3. Gerakkan kepala ke kiri atau ke kanan untuk memilih salah satu pemain.
+4. Setelah semua posisi terisi, program akan menampilkan formasi tim berdasarkan pilihan Anda dan value dari tim tersebut.
