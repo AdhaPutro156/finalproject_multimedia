@@ -111,7 +111,8 @@ def create_result_display(selected_players):
 
     return canvas
 
-# Player data and dummy images for testing
+
+# Data pemain dan gambar dummy untuk pengujian
 player_images = {
     "gk1": cv2.imread("player_gk1.jpg"),
     "gk2": cv2.imread("player_gk2.jpg"),
