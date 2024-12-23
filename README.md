@@ -61,7 +61,7 @@ Ignatius Julio Bintang Regen - 121140192
 2. Instal Library yang Dibutuhkan
 - Instal library yang digunakan dalam proyek ini:
 - Copy code pada terminal 
-'pip install opencv-python opencv-python-headless mediapipe numpy'
+'''pip install opencv-python opencv-python-headless mediapipe numpy'''
 
 4. Siapkan Gambar Pemain
 - Letakkan file gambar pemain di direktori yang sama dengan file program Python.
@@ -70,9 +70,9 @@ Ignatius Julio Bintang Regen - 121140192
   - cb1.jpg
   - cf1.jpg
   Dan sebagainya.
-Program akan mencetak pesan kesalahan jika gambar tidak ditemukan.
+  Program akan mencetak pesan kesalahan jika gambar tidak ditemukan.
 
 5. Jalankan Program
 - Simpan kode dalam file starting_eleven.py, lalu jalankan program dengan perintah:
 Copy code di terminal
-'python starting_eleven.py'
+'''python starting_eleven.py'''
