@@ -32,3 +32,23 @@ Satria Fattan Granada - 121140005
 
 
 Ignatius Julio Bintang Regen - 121140192
+
+# Logbook Mingguan
+
+### Minggu 1
+- Diskusi mengenai project yang akan dibuat
+- Pembagian tugas tiap anggota kelompok
+
+### Minggu 2
+- Mulai mengerjakan project filter pemain bola
+- Implementasi fitur face tracking dengan python
+
+### Minggu 3
+- Memperbaiki error pada codingan
+- Menambahkan fitur value starting lineup diakhir
+
+### Minggu 4
+- Mengerjakan laporan
+- Mengecek ulang codingan
+- Memasukkan codingan ke github
+- Penyusunan requirements.txt dan README.md.
