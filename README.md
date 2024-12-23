@@ -60,7 +60,6 @@ Pastikan Python 3.x sudah terinstal di komputer Anda. Jika belum, unduh dari Pyt
 
 2. Instal Library yang Dibutuhkan
 Instal library yang digunakan dalam proyek ini:
-
 Copy code
 pip install opencv-python opencv-python-headless mediapipe numpy
 
@@ -75,7 +74,6 @@ Program akan mencetak pesan kesalahan jika gambar tidak ditemukan.
 
 4. Jalankan Program
 Simpan kode dalam file starting_eleven.py, lalu jalankan program dengan perintah:
-
 bash
 Copy code
 python starting_eleven.py
