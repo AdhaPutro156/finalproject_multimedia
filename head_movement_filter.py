@@ -100,7 +100,7 @@ def create_result_display(selected_players):
         elif i < 11:  # Forwards
             x, y = positions["forwards"][i - 8]
         else:
-            continue  # Skip if there are more than 11 players
+            continue  # Melewati jika ada lebih dari 11 pemain
 
         canvas[y:y+img.shape[0], x:x+img.shape[1]] = img
         cv2.putText(canvas, f"{player_scores[i]} Pts", (x, y + img.shape[0] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
