@@ -1,253 +1,269 @@
 import cv2
+import numpy as np
 import mediapipe as mp
 import time
-import numpy as np
+import random
 
-# Inisialisasi Mediapipe FaceMesh
-mp_face_mesh = mp.solutions.face_mesh
+# Function to calculate head angle
+def calculate_head_angle(nose_tip, face_center_x):
+    angle = (nose_tip.x - face_center_x) * 100
+    return angle
 
-# Posisi dan opsi yang akan dipilih (formasi 4-3-3)
-positions = [
-    {"name": "GK", "options": ["A", "B"]},
-    {"name": "LB", "options": ["C", "D"]},
-    {"name": "LCB", "options": ["E", "F"]},
-    {"name": "RCB", "options": ["G", "H"]},
-    {"name": "RB", "options": ["I", "J"]},
-    {"name": "CMF1", "options": ["K", "L"]},
-    {"name": "DMF", "options": ["M", "N"]},
-    {"name": "CMF2", "options": ["O", "P"]},
-    {"name": "LWF", "options": ["Q", "R"]},
-    {"name": "CF", "options": ["S", "T"]},
-    {"name": "RWF", "options": ["U", "V"]}
-]
+# Function to resize image
+def resize_image(image, width, height):
+    return cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
+
+# Function to overlay an image on a frame
+def overlay_image(background, overlay, position):
+    x, y = position
+    h, w, _ = overlay.shape
+    background_height, background_width, _ = background.shape
+
+    # Adjust overlay size to fit available area
+    if x + w > background_width:
+        w = background_width - x
+    if y + h > background_height:
+        h = background_height - y
+
+    # Resize overlay image to fit available area
+    overlay_resized = cv2.resize(overlay, (w, h), interpolation=cv2.INTER_AREA)
+
+    # Overlay the resized image onto the background
+    background[y:y+h, x:x+w] = overlay_resized
+    return background
+
+player_points = {
+    "gk1": 85, "gk2": 90, "gk3": 70, "gk4": 88,
+    "lb1": 77, "lb2": 80, "lb3": 82, "lb4": 78,
+    "lcb1": 75, "lcb2": 85, "lcb3": 87, "lcb4": 80,
+    "rcb1": 88, "rcb2": 82, "rcb3": 79, "rcb4": 81,
+    "rb1": 76, "rb2": 85, "rb3": 80, "rb4": 78,
+    "cmf1": 82, "cmf2": 89, "cmf3": 84, "cmf4": 81,
+    "dmf1": 87, "dmf2": 85, "dmf3": 90, "dmf4": 80,
+    "lwf1": 88, "lwf2": 92, "lwf3": 84, "lwf4": 86,
+    "cf1": 95, "cf2": 90, "cf3": 88, "cf4": 91,
+    "rwf1": 89, "rwf2": 87, "rwf3": 86, "rwf4": 84
+}
+
+def create_result_display(selected_players):
+    canvas_height = 720
+    canvas_width = 1280
+    canvas = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 34
+
+    # Adjusted coordinates for 4-3-3 formation
+    positions = {
+        "goalkeeper": [(canvas_width // 2, canvas_height - 100)],  # Goalkeeper position
+        "defenders": [
+            (canvas_width // 2 - 300, canvas_height - 250),  # LB
+            (canvas_width // 2 - 100, canvas_height - 250),  # LCB
+            (canvas_width // 2 + 100, canvas_height - 250),  # RCB
+            (canvas_width // 2 + 300, canvas_height - 250)   # RB
+        ],
+        "midfielders": [
+            (canvas_width // 2 - 200, canvas_height - 450),  # LMF
+            (canvas_width // 2, canvas_height - 400),        # CMF
+            (canvas_width // 2 + 200, canvas_height - 450)   # RMF
+        ],
+        "forwards": [
+            (canvas_width // 2 - 300, canvas_height - 600),  # LWF
+            (canvas_width // 2, canvas_height - 650),        # CF
+            (canvas_width // 2 + 300 , canvas_height - 600)   # RWF
+        ]
+    }
+
+    # Use values from player_points dictionary
+    player_scores = [player_points[player] for player in selected_players]
+    total_score = sum(player_scores)
+
+    if total_score >= 900:
+        team_rating = "Very Very Very Nice Team!"
+    elif total_score >= 800:
+        team_rating = "Good Team"
+    elif total_score >= 700:
+        team_rating = "Better Team"
+    elif total_score >= 600:
+        team_rating = "Goodluck Team"
+    else:
+        team_rating = "Bad Team"
+
+    # Display players according to formation
+    for i, player in enumerate(selected_players):
+        img = resize_image(player_images[player], 80, 80)
+        if i == 0:  # Goalkeeper
+            x, y = positions["goalkeeper"][0]
+        elif i < 5:  # Defenders
+            x, y = positions["defenders"][i - 1]
+        elif i < 8:  # Midfielders
+            x, y = positions["midfielders"][i - 5]
+        elif i < 11:  # Forwards
+            x, y = positions["forwards"][i - 8]
+        else:
+            continue  # Skip if there are more than 11 players
+
+        canvas[y:y+img.shape[0], x:x+img.shape[1]] = img
+        cv2.putText(canvas, f"{player_scores[i]} Pts", (x, y + img.shape[0] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+    # Display total score and team rating
+    cv2.putText(canvas, f"Total Score: {total_score}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
+    cv2.putText(canvas, team_rating, (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
+
+    return canvas
 
 # Player data and dummy images for testing
 player_images = {
-    "gk1": cv2.imread("gk1.png"),
-    "gk2": cv2.imread("gk2.png"),
-    "gk3": cv2.imread("gk3.png"),
-    "gk4": cv2.imread("gk4.png"),
-    "lb1": cv2.imread("lb1.png"),
-    "lb2": cv2.imread("lb2.png"),
-    "lb3": cv2.imread("lb3.png"),
-    "lb4": cv2.imread("lb4.png"),
-    "lcb1": cv2.imread("cb1.png"),
-    "lcb2": cv2.imread("cb2.png"),
-    "lcb3": cv2.imread("cb3.png"),
-    "lcb4": cv2.imread("cb4.png"),
-    "rcb1": cv2.imread("cb5.png"),
-    "rcb2": cv2.imread("cb6.png"),
-    "rcb3": cv2.imread("cb7.png"),
-    "rcb4": cv2.imread("cb8.png"),
-    "rb1": cv2.imread("rb1.png"),
-    "rb2": cv2.imread("rb2.png"),
-    "rb3": cv2.imread("rb3.png"),
-    "rb4": cv2.imread("rb4.png"),
-    "cmf1": cv2.imread("cm1.png"),
-    "cmf2": cv2.imread("cm2.png"),
-    "cmf3": cv2.imread("cm3.png"),
-    "cmf4": cv2.imread("cm4.png"),
-    "dmf1": cv2.imread("dm1.png"),
-    "dmf2": cv2.imread("dm2.png"),
-    "dmf3": cv2.imread("dm3.png"),
-    "dmf4": cv2.imread("dm4.png"),
-    "lwf1": cv2.imread("lw1.png"),
-    "lwf2": cv2.imread("lw1.png"),
-    "lwf3": cv2.imread("lw1.png"),
-    "lwf4": cv2.imread("lw1.png"),
-    "cf1": cv2.imread("cf1.png"),
-    "cf2": cv2.imread("f2.png"),
-    "cf3": cv2.imread("cf3.png"),
-    "cf4": cv2.imread("cf4.png"),
-    "rwf1": cv2.imread("rw1.png"),
-    "rwf2": cv2.imread("rw2.png"),
-    "rwf3": cv2.imread("rw3.png"),
-    "rwf4": cv2.imread("rw4.png")
+    "gk1": cv2.imread("player_gk1.jpg"),
+    "gk2": cv2.imread("player_gk2.jpg"),
+    "gk3": cv2.imread("player_gk3.jpg"),
+    "gk4": cv2.imread("player_gk4.jpg"),
+    "lb1": cv2.imread("player_lb1.jpg"),
+    "lb2": cv2.imread("player_lb2.jpg"),
+    "lb3": cv2.imread("player_lb3.jpg"),
+    "lb4": cv2.imread("player_lb4.jpg"),
+    "lcb1": cv2.imread("player_lcb1.jpg"),
+    "lcb2": cv2.imread("player_lcb2.jpg"),
+    "lcb3": cv2.imread("player_lcb3.jpg"),
+    "lcb4": cv2.imread("player_lcb4.jpg"),
+    "rcb1": cv2.imread("player_rcb1.jpg"),
+    "rcb2": cv2.imread("player_rcb2.jpg"),
+    "rcb3": cv2.imread("player_rcb3.jpg"),
+    "rcb4": cv2.imread("player_rcb4.jpg"),
+    "rb1": cv2.imread("player_rb1.jpg"),
+    "rb2": cv2.imread("player_rb2.jpg"),
+    "rb3": cv2.imread("player_rb3.jpg"),
+    "rb4": cv2.imread("player_rb4.jpg"),
+    "cmf1": cv2.imread("player_cmf1.jpg"),
+    "cmf2": cv2.imread("player_cmf2.jpg"),
+    "cmf3": cv2.imread("player_cmf3.jpg"),
+    "cmf4": cv2.imread("player_cmf4.jpg"),
+    "dmf1": cv2.imread("player_dmf1.jpg"),
+    "dmf2": cv2.imread("player_dmf2.jpg"),
+    "dmf3": cv2.imread("player_dmf3.jpg"),
+    "dmf4": cv2.imread("player_dmf4.jpg"),
+    "lwf1": cv2.imread("player_lwf1.jpg"),
+    "lwf2": cv2.imread("player_lwf2.jpg"),
+    "lwf3": cv2.imread("player_lwf3.jpg"),
+    "lwf4": cv2.imread("player_lwf4.jpg"),
+    "cf1": cv2.imread("player_cf1.jpg"),
+    "cf2": cv2.imread("player_cf2.jpg"),
+    "cf3": cv2.imread("player_cf3.jpg"),
+    "cf4": cv2.imread("player_cf4.jpg"),
+    "rwf1": cv2.imread("player_rwf1.jpg"),
+    "rwf2": cv2.imread("player_rwf2.jpg"),
+    "rwf3": cv2.imread("player_rwf3.jpg"),
+    "rwf4": cv2.imread("player_rwf4.jpg")
 }
 
-# Fungsi untuk mengubah ukuran gambar
-def resize_image(image, width):
-    aspect_ratio = image.shape[1] / image.shape[0]  # Rasio aspek (lebar/tinggi)
-    height = int(width / aspect_ratio)  # Hitung tinggi berdasarkan lebar
-    resized_image = cv2.resize(image, (width, height))
-    return resized_image
+# Check if images are loaded correctly
+for player, image in player_images.items():
+    if image is None:
+        print(f"Error loading image for {player}. Check the file path.")
 
-# Fungsi untuk menghitung sudut kepala
-def calculate_head_angle(nose_tip, face_center_x):
-    delta_x = nose_tip.x - face_center_x
-    return delta_x * 200  # Scaling sensitivitas lebih kecil untuk respons lebih cepat
+positions = [
+    {"name": "GK", "options": ["gk1", "gk2", "gk3", "gk4"]},
+    {"name": "LB", "options": ["lb1", "lb2", "lb3", "lb4"]},
+    {"name": "LCB", "options": ["lcb1", "lcb2", "lcb3", "lcb4"]},
+    {"name": "RCB", "options": ["rcb1", "rcb2", "rcb3", "rcb4"]},
+    {"name": "RB", "options": ["rb1", "rb2", "rb3", "rb4"]},
+    {"name": "CMF1", "options": ["cmf1", "cmf2", "cmf3", "cmf4"]},
+    {"name": "DMF", "options": ["dmf1", "dmf2", "dmf3", "dmf4"]},
+    {"name": "CMF2", "options": ["cmf1", "cmf2", "cmf3", "cmf4"]},
+    {"name": "LWF", "options": ["lwf1", "lwf2", "lwf3", "lwf4"]},
+    {"name": "CF", "options": ["cf1", "cf2", "cf3", "cf4"]},
+    {"name": "RWF", "options": ["rwf1", "rwf2", "rwf3", "rwf4"]}
+]
 
-# Fungsi untuk menampilkan hasil di lapangan sesuai formasi 4-3-3
-def create_field_with_players(selected_players, frame):
-    field_color = (34, 139, 34)  # Warna hijau lapangan
-    frame_height, frame_width, _ = frame.shape
-
-    # Koordinat posisi pemain di lapangan sesuai formasi yang diminta
-    positions_coords = [
-        (frame_width // 2, 100),  # LB (Kiri atas)
-        (100, 150), (frame_width - 100, 150),  # LW dan RW
-        (frame_width // 2, 200),  # CMF1
-        (100, 250),  # LCB
-        (frame_width // 4, 350), (frame_width // 2, 350), (frame_width // 4 * 3, 350),  # GK, DMF, CF
-        (100, 450),  # RCB
-        (frame_width // 2, 500),  # CMF2
-        (100, 550), (frame_width - 100, 550)  # RB dan RW
-    ]
-
-    # Menampilkan gambar pemain sesuai posisi dalam formasi
-    for i, player in enumerate(selected_players):
-        if i < len(positions_coords):  # Pastikan tidak melebihi koordinat yang tersedia
-            x, y = positions_coords[i]
-
-            # Tampilkan gambar pemain jika tersedia
-            if player in player_images and player_images[player] is not None:
-                player_img = player_images[player]
-                resized_img = resize_image(player_img, 50)  # Atur lebar menjadi 80 piksel
-                img_h, img_w, _ = resized_img.shape
-
-                # Periksa apakah gambar bisa muat di dalam frame
-                if y - img_h // 2 >= 0 and y + img_h // 2 <= frame_height and x - img_w // 2 >= 0 and x + img_w // 2 <= frame_width:
-                    y_offset = y - img_h // 2
-                    x_offset = x - img_w // 2
-                    frame[y_offset:y_offset + img_h, x_offset:x_offset + img_w] = resized_img
-
-            # Tampilkan nama pemain sesuai posisinya (misal: GK, LB, CF, dll.)
-            cv2.putText(frame, player, (x - 30, y + 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-    return frame
-
-# Fungsi untuk menampilkan gambar pada frame
-def overlay_image(background, overlay, position):
-    if overlay is None:
-        return background
-
-    x, y = position
-    h, w, _ = overlay.shape
-    if y + h > background.shape[0] or x + w > background.shape[1]:
-        return background  # Jangan menampilkan jika keluar dari frame
-
-    alpha_overlay = overlay[:, :, 3] / 255.0 if overlay.shape[-1] == 4 else None
-    if alpha_overlay is not None:
-        for c in range(0, 3):
-            background[y:y + h, x:x + w, c] = (
-                alpha_overlay * overlay[:, :, c] +
-                (1 - alpha_overlay) * background[y:y + h, x:x + w, c]
-            )
-    else:
-        background[y:y + h, x:x + w] = overlay
-
-    return background
-
-# Fungsi utama
 def main():
     cap = cv2.VideoCapture(0)
     selected_players = []
     current_position_index = 0
-    debounce_time = 1.0  # Waktu debounce dalam detik (dikurangi)
-    cooldown_time = 0.5  # Waktu cooldown tambahan setelah pemilihan (dikurangi)
+    debounce_time = 1.0
+    cooldown_time = 0.3
     last_selection_time = time.time()
 
-    stability_threshold = 5  # Jumlah frame yang stabil untuk konfirmasi
-    stable_count = 0  # Hitungan stabilitas arah
-
+    stability_threshold = 5
+    stable_count = 0
     previous_angle_direction = None
+    confirmed_selection = False  # New variable to track confirmation
 
-    with mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
+    selected_options = {}  # Store selected options for each position
+
+    with mp.solutions.face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Konversi frame ke RGB
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = face_mesh.process(frame_rgb)
 
-            # Jika ada wajah yang terdeteksi
             if results.multi_face_landmarks:
                 for face_landmarks in results.multi_face_landmarks:
                     nose_tip = face_landmarks.landmark[1]
                     left_cheek = face_landmarks.landmark[234]
                     right_cheek = face_landmarks.landmark[454]
-                    top_head = face_landmarks.landmark[10]  # Titik atas kepala
+                    top_head = face_landmarks.landmark[10]
 
-                    # Hitung pusat wajah
                     face_center_x = (left_cheek.x + right_cheek.x) / 2
                     head_angle = calculate_head_angle(nose_tip, face_center_x)
 
-                    # Ambang batas sudut kepala untuk deteksi gerakan
-                    angle_threshold = 15  # Ambang batas lebih kecil untuk sensitivitas yang lebih tinggi
-
-                    # Pilihan berdasarkan arah kepala
-                    current_time = time.time()
+                    angle_threshold = 15
                     direction = None
                     if head_angle > angle_threshold:
                         direction = "right"
                     elif head_angle < -angle_threshold:
                         direction = "left"
+                    else:
+                        direction = None
 
-                    # Hitung stabilitas arah
                     if direction == previous_angle_direction:
                         stable_count += 1
                     else:
-                        stable_count = 0  # Reset jika arah berubah
+                        stable_count = 0
 
                     previous_angle_direction = direction
 
                     if stable_count >= stability_threshold and current_position_index < len(positions):
-                        if current_time - last_selection_time >= cooldown_time:  # Tambahkan cooldown
-                            if direction == "right":  # Kepala ke kanan
-                                selected_players.append(positions[current_position_index]["options"][1])
+                        current_time = time.time()
+                        if current_time - last_selection_time >= cooldown_time:
+                            position = positions[current_position_index]
+                            if position["name"] not in selected_options:
+                                selected_options[position["name"]] = random.sample(position["options"], 2)  # Select two random options
+
+                            left_image = player_images[selected_options[position["name"]][0]]
+                            right_image = player_images[selected_options[position["name"]][1]]
+
+                            face_width = int(abs(right_cheek.x - left_cheek.x) * frame.shape[1])
+                            face_height = int(abs(top_head.y - nose_tip.y) * frame.shape[0])
+
+                            left_image_resized = resize_image(left_image, face_width, face_height)
+                            right_image_resized = resize_image(right_image, face_width, face_height)
+
+                            frame = overlay_image(frame, left_image_resized, (50, 100))
+                            frame = overlay_image(frame, right_image_resized, (400, 100))
+
+                            if direction == "left" or direction == "right":
+                                confirmed_selection = True
+
+                            if confirmed_selection:
+                                selected_player = selected_options[position["name"]][0] if direction == "left" else selected_options[position["name"]][1]
+                                selected_players.append(selected_player)
                                 current_position_index += 1
-                            elif direction == "left":  # Kepala ke kiri
-                                selected_players.append(positions[current_position_index]["options"][0])
-                                current_position_index += 1
+                                last_selection_time = current_time
+                                confirmed_selection = False
 
-                            last_selection_time = current_time
-                            stable_count = 0  # Reset stabilitas
-
-                    # Tampilkan gambar di atas kepala
-                    frame_height, frame_width, _ = frame.shape
-                    text_position_left = (
-                        int(top_head.x * frame_width) - 200,
-                        int((top_head.y - 0.1) * frame_height)
-                    )
-                    text_position_right = (
-                        int(top_head.x * frame_width) + 50,
-                        int((top_head.y - 0.1) * frame_height)
-                    )
-
-                    # Tampilkan gambar pilihan kiri dan kanan
                     if current_position_index < len(positions):
                         position = positions[current_position_index]
-                        left_image = player_images[position["options"][0]]
-                        right_image = player_images[position["options"][1]]
+                        info_position_text = f"Position: {position['name']}"
+                        cv2.putText(frame, info_position_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                        # Tempelkan gambar di posisi yang sesuai
-                        frame = overlay_image(frame, left_image, (text_position_left[0], text_position_left[1]))
-                        frame = overlay_image(frame, right_image, (text_position_right[0], text_position_right[1]))
-
-            # Menampilkan informasi posisi yang tetap di bagian atas
-            if current_position_index < len(positions):
-                position = positions[current_position_index]
-                # Hanya menampilkan nama posisi (misalnya: Posisi: GK)
-                info_position_text = f"Posisi: {position['name']}"
-                cv2.putText(frame, info_position_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-
-            # Jika semua pemain sudah dipilih
             if current_position_index >= len(positions):
-                frame = create_field_with_players(selected_players, frame)
-                # Simpan hasil pemilihan pemain ke file JPG
-                cv2.imwrite("starting_eleven_custom_form.jpg", frame)
-
-                cv2.imshow("Starting Eleven", frame)
-                # Tampilkan hasil selama 10 detik sebelum keluar
+                result_display = create_result_display(selected_players)
+                cv2.imshow("Starting Eleven Result", result_display)
                 cv2.waitKey(10000)
                 break
 
-            # Tampilkan frame
             cv2.imshow("Starting Eleven Selection", frame)
 
-            # Keluar dengan 'q'
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
