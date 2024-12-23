@@ -187,7 +187,7 @@ def main():
     stability_threshold = 5
     stable_count = 0
     previous_angle_direction = None
-    confirmed_selection = False  # New variable to track confirmation
+    confirmed_selection = False  # Variabel baru untuk melacak konfirmasi pemilihan
 
     selected_options = {}  # Store selected options for each position
 
