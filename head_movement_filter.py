@@ -4,34 +4,35 @@ import mediapipe as mp
 import time
 import random
 
-# Function to calculate head angle
+# Fungsi untuk menghitung sudut kepala berdasarkan ujung hidung dan pusat wajah
 def calculate_head_angle(nose_tip, face_center_x):
     angle = (nose_tip.x - face_center_x) * 100
     return angle
 
-# Function to resize image
+# Fungsi untuk mengubah ukuran gambar ke lebar dan tinggi yang ditentukan
 def resize_image(image, width, height):
     return cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
 
-# Function to overlay an image on a frame
+# Fungsi untuk menempatkan gambar di atas frame latar belakang pada posisi yang ditentukan
 def overlay_image(background, overlay, position):
     x, y = position
     h, w, _ = overlay.shape
     background_height, background_width, _ = background.shape
 
-    # Adjust overlay size to fit available area
+# Menyesuaikan ukuran overlay agar sesuai dengan area yang tersedia
     if x + w > background_width:
         w = background_width - x
     if y + h > background_height:
         h = background_height - y
 
-    # Resize overlay image to fit available area
+# Mengubah ukuran gambar overlay agar sesuai dengan area yang tersedia
     overlay_resized = cv2.resize(overlay, (w, h), interpolation=cv2.INTER_AREA)
 
-    # Overlay the resized image onto the background
+# Menempatkan gambar overlay yang telah diubah ukuran ke latar belakang
     background[y:y+h, x:x+w] = overlay_resized
     return background
 
+# Kamus untuk menyimpan poin pemain untuk berbagai pemain
 player_points = {
     "gk1": 85, "gk2": 90, "gk3": 70, "gk4": 88,
     "lb1": 77, "lb2": 80, "lb3": 82, "lb4": 78,
@@ -45,6 +46,7 @@ player_points = {
     "rwf1": 89, "rwf2": 87, "rwf3": 86, "rwf4": 84
 }
 
+# Fungsi untuk membuat kanvas tampilan hasil untuk pemain yang dipilih
 def create_result_display(selected_players):
     canvas_height = 720
     canvas_width = 1280
@@ -71,7 +73,7 @@ def create_result_display(selected_players):
         ]
     }
 
-    # Use values from player_points dictionary
+# Menggunakan nilai dari kamus player_points untuk mendapatkan skor pemain yang dipilih
     player_scores = [player_points[player] for player in selected_players]
     total_score = sum(player_scores)
 
@@ -86,7 +88,7 @@ def create_result_display(selected_players):
     else:
         team_rating = "Bad Team"
 
-    # Display players according to formation
+# Menampilkan pemain sesuai dengan formasi
     for i, player in enumerate(selected_players):
         img = resize_image(player_images[player], 80, 80)
         if i == 0:  # Goalkeeper
@@ -103,7 +105,7 @@ def create_result_display(selected_players):
         canvas[y:y+img.shape[0], x:x+img.shape[1]] = img
         cv2.putText(canvas, f"{player_scores[i]} Pts", (x, y + img.shape[0] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-    # Display total score and team rating
+# Menampilkan total skor dan rating tim
     cv2.putText(canvas, f"Total Score: {total_score}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
     cv2.putText(canvas, team_rating, (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
 
@@ -153,7 +155,7 @@ player_images = {
     "rwf4": cv2.imread("player_rwf4.jpg")
 }
 
-# Check if images are loaded correctly
+# Memeriksa apakah gambar dimuat dengan benar
 for player, image in player_images.items():
     if image is None:
         print(f"Error loading image for {player}. Check the file path.")
@@ -172,6 +174,7 @@ positions = [
     {"name": "RWF", "options": ["rwf1", "rwf2", "rwf3", "rwf4"]}
 ]
 
+# Fungsi utama untuk menjalankan program
 def main():
     cap = cv2.VideoCapture(0)
     selected_players = []
