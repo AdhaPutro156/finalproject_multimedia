@@ -56,24 +56,23 @@ Ignatius Julio Bintang Regen - 121140192
 # Instruksi instalansi dan penggunaan program
 ## Langkah Instalasi
 1. Instal Python
-Pastikan Python 3.x sudah terinstal di komputer Anda. Jika belum, unduh dari Python Official Website.
+- Pastikan Python 3.x sudah terinstal di komputer Anda. Jika belum, unduh dari Python Official Website.
 
 2. Instal Library yang Dibutuhkan
-Instal library yang digunakan dalam proyek ini:
-Copy code
-pip install opencv-python opencv-python-headless mediapipe numpy
+- Instal library yang digunakan dalam proyek ini:
+- Copy code pada terminal 
+'pip install opencv-python opencv-python-headless mediapipe numpy'
 
-3. Siapkan Gambar Pemain
-Letakkan file gambar pemain di direktori yang sama dengan file program Python.
-Pastikan nama file sesuai dengan yang tercantum di kode, seperti:
-gk1.jpg
-cb1.jpg
-cf1.jpg
-Dan sebagainya.
+4. Siapkan Gambar Pemain
+- Letakkan file gambar pemain di direktori yang sama dengan file program Python.
+- Pastikan nama file sesuai dengan yang tercantum di kode, seperti:
+  - gk1.jpg
+  - cb1.jpg
+  - cf1.jpg
+  Dan sebagainya.
 Program akan mencetak pesan kesalahan jika gambar tidak ditemukan.
 
-4. Jalankan Program
-Simpan kode dalam file starting_eleven.py, lalu jalankan program dengan perintah:
-bash
-Copy code
-python starting_eleven.py
+5. Jalankan Program
+- Simpan kode dalam file starting_eleven.py, lalu jalankan program dengan perintah:
+Copy code di terminal
+'python starting_eleven.py'
