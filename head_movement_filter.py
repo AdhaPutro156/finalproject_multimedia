@@ -209,7 +209,7 @@ def main():
                     face_center_x = (left_cheek.x + right_cheek.x) / 2
                     head_angle = calculate_head_angle(nose_tip, face_center_x)
 
-                    angle_threshold = 10
+                    angle_threshold = 15
                     direction = None
                     if head_angle > angle_threshold:
                         direction = "right"
