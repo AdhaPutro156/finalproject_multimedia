@@ -25,13 +25,13 @@ Proyek ini bertujuan untuk mengembangkan filter interaktif yang memungkinkan pen
 - Inovasi Teknologi: Menggabungkan facial tracking dengan gamifikasi untuk meningkatkan pengalaman pengguna.
 Proyek ini tidak hanya dirancang untuk menghibur, tetapi juga memperkenalkan pengguna pada pengalaman berbasis teknologi modern yang menggabungkan olahraga, data, dan kecerdasan buatan.
 # Anggota Kelompok :
-Adha Putro Wicaksono - 121140156
+Adha Putro Wicaksono - 121140156 - AdhaPutro156
 
 
-Satria Fattan Granada - 121140005
+Satria Fattan Granada - 121140005 - satriafattan
 
 
-Ignatius Julio Bintang Regen - 121140192
+Ignatius Julio Bintang Regen - 121140192 - julioregen31
 
 # Logbook Mingguan
 
