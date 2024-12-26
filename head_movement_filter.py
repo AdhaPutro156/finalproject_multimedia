@@ -33,18 +33,8 @@ def overlay_image(background, overlay, position):
     background[y:y+h, x:x+w] = overlay_resized
     return background
 
-player_points = {
-    "gk1": 85, "gk2": 90, "gk3": 70, "gk4": 88,
-    "lb1": 77, "lb2": 80, "lb3": 82, "lb4": 78,
-    "lcb1": 75, "lcb2": 85, "lcb3": 87, "lcb4": 80,
-    "rcb1": 88, "rcb2": 82, "rcb3": 79, "rcb4": 81,
-    "rb1": 76, "rb2": 85, "rb3": 80, "rb4": 78,
-    "cmf1": 82, "cmf2": 89, "cmf3": 84, "cmf4": 81,
-    "dmf1": 87, "dmf2": 85, "dmf3": 90, "dmf4": 80,
-    "lwf1": 88, "lwf2": 92, "lwf3": 84, "lwf4": 86,
-    "cf1": 95, "cf2": 90, "cf3": 88, "cf4": 91,
-    "rwf1": 89, "rwf2": 87, "rwf3": 86, "rwf4": 84
-}
+# Player points and images remain unchanged...
+player_points = { "gk1": 85, "gk2": 90, "gk3": 70, "gk4": 88, "lb1": 77, "lb2": 80, "lb3": 82, "lb4": 78, "lcb1": 75, "lcb2": 85, "lcb3": 87, "lcb4": 80, "rcb1": 88, "rcb2": 82, "rcb3": 79, "rcb4": 81, "rb1": 76, "rb2": 85, "rb3": 80, "rb4": 78, "cmf1": 82, "cmf2": 89, "cmf3": 84, "cmf4": 81, "dmf1": 87, "dmf2": 85, "dmf3": 90, "dmf4": 80, "lwf1": 88, "lwf2": 92, "lwf3": 84, "lwf4": 86, "cf1": 95, "cf2": 90, "cf3": 88, "cf4": 91, "rwf1": 89, "rwf2": 87, "rwf3": 86, "rwf4": 84 }
 
 def create_result_display(selected_players):
     canvas_height = 720
@@ -53,22 +43,22 @@ def create_result_display(selected_players):
 
     # Adjusted coordinates for 4-3-3 formation
     positions = {
-        "goalkeeper": [(canvas_width // 2, canvas_height - 100)],  # Goalkeeper position
+        "goalkeeper": [(canvas_width // 2, canvas_height - 100)],
         "defenders": [
-            (canvas_width // 2 - 300, canvas_height - 250),  # LB
-            (canvas_width // 2 - 100, canvas_height - 250),  # LCB
-            (canvas_width // 2 + 100, canvas_height - 250),  # RCB
-            (canvas_width // 2 + 300, canvas_height - 250)   # RB
+            (canvas_width // 2 - 300, canvas_height - 250),
+            (canvas_width // 2 - 100, canvas_height - 250),
+            (canvas_width // 2 + 100, canvas_height - 250),
+            (canvas_width // 2 + 300, canvas_height - 250)
         ],
         "midfielders": [
-            (canvas_width // 2 - 200, canvas_height - 450),  # LMF
-            (canvas_width // 2, canvas_height - 400),        # CMF
-            (canvas_width // 2 + 200, canvas_height - 450)   # RMF
+            (canvas_width // 2 - 200, canvas_height - 450),
+            (canvas_width // 2, canvas_height - 400),
+            (canvas_width // 2 + 200, canvas_height - 450)
         ],
         "forwards": [
-            (canvas_width // 2 - 300, canvas_height - 600),  # LWF
-            (canvas_width // 2, canvas_height - 650),        # CF
-            (canvas_width // 2 + 300 , canvas_height - 600)   # RWF
+            (canvas_width // 2 - 300, canvas_height - 600),
+            (canvas_width // 2, canvas_height - 650),
+            (canvas_width // 2 + 300, canvas_height - 600)
         ]
     }
 
@@ -105,7 +95,7 @@ def create_result_display(selected_players):
         cv2.putText(canvas, f"{player_scores[i]} Pts", (x, y + img.shape[0] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
     # Display total score and team rating
-    cv2.putText(canvas, f"Total Score: {total_score}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
+    cv2.putText(canvas, f"Total Score: {total_score}", ( 20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
     cv2.putText(canvas, team_rating, (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
 
     return canvas
@@ -154,13 +144,14 @@ player_images = {
     "rwf3": cv2.imread(os.path.join(asset_path, "player_rwf3.jpg")),
     "rwf4": cv2.imread(os.path.join(asset_path, "player_rwf4.jpg"))
 }
+
 # Check if images are loaded correctly
 for player, image in player_images.items():
     if image is None:
         print(f"Error loading image for {player}. Check the file path.")
 
 positions = [
-    {"name": "GK", "options": ["gk1", "gk2", "gk3", "gk4"]},
+    {"name": " GK", "options": ["gk1", "gk2", "gk3", "gk4"]},
     {"name": "LB", "options": ["lb1", "lb2", "lb3", "lb4"]},
     {"name": "LCB", "options": ["lcb1", "lcb2", "lcb3", "lcb4"]},
     {"name": "RCB", "options": ["rcb1", "rcb2", "rcb3", "rcb4"]},
@@ -194,6 +185,7 @@ def main():
             if not ret:
                 break
 
+            frame_height, frame_width, _ = frame.shape  # Get actual frame dimensions
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = face_mesh.process(frame_rgb)
 
@@ -233,8 +225,8 @@ def main():
                             left_image = player_images[selected_options[position["name"]][0]]
                             right_image = player_images[selected_options[position["name"]][1]]
 
-                            face_width = int(abs(right_cheek.x - left_cheek.x) * frame.shape[1])
-                            face_height = int(abs(top_head.y - nose_tip.y) * frame.shape[0])
+                            face_width = int(abs(right_cheek.x - left_cheek.x) * frame_width)
+                            face_height = int(abs(top_head.y - nose_tip.y) * frame_height)
 
                             left_image_resized = resize_image(left_image, face_width, face_height)
                             right_image_resized = resize_image(right_image, face_width, face_height)
