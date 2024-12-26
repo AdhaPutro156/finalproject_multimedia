@@ -3,36 +3,36 @@ import numpy as np
 import mediapipe as mp
 import time
 import random
+import os
 
-# Fungsi untuk menghitung sudut kepala berdasarkan ujung hidung dan pusat wajah
+# Function to calculate head angle
 def calculate_head_angle(nose_tip, face_center_x):
     angle = (nose_tip.x - face_center_x) * 100
     return angle
 
-# Fungsi untuk mengubah ukuran gambar ke lebar dan tinggi yang ditentukan
+# Function to resize image
 def resize_image(image, width, height):
     return cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
 
-# Fungsi untuk menempatkan gambar di atas frame latar belakang pada posisi yang ditentukan
+# Function to overlay an image on a frame
 def overlay_image(background, overlay, position):
     x, y = position
     h, w, _ = overlay.shape
     background_height, background_width, _ = background.shape
 
-# Menyesuaikan ukuran overlay agar sesuai dengan area yang tersedia
+    # Adjust overlay size to fit available area
     if x + w > background_width:
         w = background_width - x
     if y + h > background_height:
         h = background_height - y
 
-# Mengubah ukuran gambar overlay agar sesuai dengan area yang tersedia
+    # Resize overlay image to fit available area
     overlay_resized = cv2.resize(overlay, (w, h), interpolation=cv2.INTER_AREA)
 
-# Menempatkan gambar overlay yang telah diubah ukuran ke latar belakang
+    # Overlay the resized image onto the background
     background[y:y+h, x:x+w] = overlay_resized
     return background
 
-# Kamus untuk menyimpan poin pemain untuk berbagai pemain
 player_points = {
     "gk1": 85, "gk2": 90, "gk3": 70, "gk4": 88,
     "lb1": 77, "lb2": 80, "lb3": 82, "lb4": 78,
@@ -46,7 +46,6 @@ player_points = {
     "rwf1": 89, "rwf2": 87, "rwf3": 86, "rwf4": 84
 }
 
-# Fungsi untuk membuat kanvas tampilan hasil untuk pemain yang dipilih
 def create_result_display(selected_players):
     canvas_height = 720
     canvas_width = 1280
@@ -73,7 +72,7 @@ def create_result_display(selected_players):
         ]
     }
 
-# Menggunakan nilai dari kamus player_points untuk mendapatkan skor pemain yang dipilih
+    # Use values from player_points dictionary
     player_scores = [player_points[player] for player in selected_players]
     total_score = sum(player_scores)
 
@@ -88,7 +87,7 @@ def create_result_display(selected_players):
     else:
         team_rating = "Bad Team"
 
-# Menampilkan pemain sesuai dengan formasi
+    # Display players according to formation
     for i, player in enumerate(selected_players):
         img = resize_image(player_images[player], 80, 80)
         if i == 0:  # Goalkeeper
@@ -100,63 +99,62 @@ def create_result_display(selected_players):
         elif i < 11:  # Forwards
             x, y = positions["forwards"][i - 8]
         else:
-            continue  # Melewati jika ada lebih dari 11 pemain
+            continue  # Skip if there are more than 11 players
 
         canvas[y:y+img.shape[0], x:x+img.shape[1]] = img
         cv2.putText(canvas, f"{player_scores[i]} Pts", (x, y + img.shape[0] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-# Menampilkan total skor dan rating tim
+    # Display total score and team rating
     cv2.putText(canvas, f"Total Score: {total_score}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
     cv2.putText(canvas, team_rating, (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3)
 
     return canvas
 
-
-# Data pemain dan gambar dummy untuk pengujian
+# Player data and dummy images for testing
+asset_path = "asset"
 player_images = {
-    "gk1": cv2.imread("player_gk1.jpg"),
-    "gk2": cv2.imread("player_gk2.jpg"),
-    "gk3": cv2.imread("player_gk3.jpg"),
-    "gk4": cv2.imread("player_gk4.jpg"),
-    "lb1": cv2.imread("player_lb1.jpg"),
-    "lb2": cv2.imread("player_lb2.jpg"),
-    "lb3": cv2.imread("player_lb3.jpg"),
-    "lb4": cv2.imread("player_lb4.jpg"),
-    "lcb1": cv2.imread("player_lcb1.jpg"),
-    "lcb2": cv2.imread("player_lcb2.jpg"),
-    "lcb3": cv2.imread("player_lcb3.jpg"),
-    "lcb4": cv2.imread("player_lcb4.jpg"),
-    "rcb1": cv2.imread("player_rcb1.jpg"),
-    "rcb2": cv2.imread("player_rcb2.jpg"),
-    "rcb3": cv2.imread("player_rcb3.jpg"),
-    "rcb4": cv2.imread("player_rcb4.jpg"),
-    "rb1": cv2.imread("player_rb1.jpg"),
-    "rb2": cv2.imread("player_rb2.jpg"),
-    "rb3": cv2.imread("player_rb3.jpg"),
-    "rb4": cv2.imread("player_rb4.jpg"),
-    "cmf1": cv2.imread("player_cmf1.jpg"),
-    "cmf2": cv2.imread("player_cmf2.jpg"),
-    "cmf3": cv2.imread("player_cmf3.jpg"),
-    "cmf4": cv2.imread("player_cmf4.jpg"),
-    "dmf1": cv2.imread("player_dmf1.jpg"),
-    "dmf2": cv2.imread("player_dmf2.jpg"),
-    "dmf3": cv2.imread("player_dmf3.jpg"),
-    "dmf4": cv2.imread("player_dmf4.jpg"),
-    "lwf1": cv2.imread("player_lwf1.jpg"),
-    "lwf2": cv2.imread("player_lwf2.jpg"),
-    "lwf3": cv2.imread("player_lwf3.jpg"),
-    "lwf4": cv2.imread("player_lwf4.jpg"),
-    "cf1": cv2.imread("player_cf1.jpg"),
-    "cf2": cv2.imread("player_cf2.jpg"),
-    "cf3": cv2.imread("player_cf3.jpg"),
-    "cf4": cv2.imread("player_cf4.jpg"),
-    "rwf1": cv2.imread("player_rwf1.jpg"),
-    "rwf2": cv2.imread("player_rwf2.jpg"),
-    "rwf3": cv2.imread("player_rwf3.jpg"),
-    "rwf4": cv2.imread("player_rwf4.jpg")
+    "gk1": cv2.imread(os.path.join(asset_path, "player_gk1.jpg")),
+    "gk2": cv2.imread(os.path.join(asset_path, "player_gk2.jpg")),
+    "gk3": cv2.imread(os.path.join(asset_path, "player_gk3.jpg")),
+    "gk4": cv2.imread(os.path.join(asset_path, "player_gk4.jpg")),
+    "lb1": cv2.imread(os.path.join(asset_path, "player_lb1.jpg")),
+    "lb2": cv2.imread(os.path.join(asset_path, "player_lb2.jpg")),
+    "lb3": cv2.imread(os.path.join(asset_path, "player_lb3.jpg")),
+    "lb4": cv2.imread(os.path.join(asset_path, "player_lb4.jpg")),
+    "lcb1": cv2.imread(os.path.join(asset_path, "player_lcb1.jpg")),
+    "lcb2": cv2.imread(os.path.join(asset_path, "player_lcb2.jpg")),
+    "lcb3": cv2.imread(os.path.join(asset_path, "player_lcb3.jpg")),
+    "lcb4": cv2.imread(os.path.join(asset_path, "player_lcb4.jpg")),
+    "rcb1": cv2.imread(os.path.join(asset_path, "player_rcb1.jpg")),
+    "rcb2": cv2.imread(os.path.join(asset_path, "player_rcb2.jpg")),
+    "rcb3": cv2.imread(os.path.join(asset_path, "player_rcb3.jpg")),
+    "rcb4": cv2.imread(os.path.join(asset_path, "player_rcb4.jpg")),
+    "rb1": cv2.imread(os.path.join(asset_path, "player_rb1.jpg")),
+    "rb2": cv2.imread(os.path.join(asset_path, "player_rb2.jpg")),
+    "rb3": cv2.imread(os.path.join(asset_path, "player_rb3.jpg")),
+    "rb4": cv2.imread(os.path.join(asset_path, "player_rb4.jpg")),
+    "cmf1": cv2.imread(os.path.join(asset_path, "player_cmf1.jpg")),
+    "cmf2": cv2.imread(os.path.join(asset_path, "player_cmf2.jpg")),
+    "cmf3": cv2.imread(os.path.join(asset_path, "player_cmf3.jpg")),
+    "cmf4": cv2.imread(os.path.join(asset_path, "player_cmf4.jpg")),
+    "dmf1": cv2.imread(os.path.join(asset_path, "player_dmf1.jpg")),
+    "dmf2": cv2.imread(os.path.join(asset_path, "player_dmf2.jpg")),
+    "dmf3": cv2.imread(os.path.join(asset_path, "player_dmf3.jpg")),
+    "dmf4": cv2.imread(os.path.join(asset_path, "player_dmf4.jpg")),
+    "lwf1": cv2.imread(os.path.join(asset_path, "player_lwf1.jpg")),
+    "lwf2": cv2.imread(os.path.join(asset_path, "player_lwf2.jpg")),
+    "lwf3": cv2.imread(os.path.join(asset_path, "player_lwf3.jpg")),
+    "lwf4": cv2.imread(os.path.join(asset_path, "player_lwf4.jpg")),
+    "cf1": cv2.imread(os.path.join(asset_path, "player_cf1.jpg")),
+    "cf2": cv2.imread(os.path.join(asset_path, "player_cf2.jpg")),
+    "cf3": cv2.imread(os.path.join(asset_path, "player_cf3.jpg")),
+    "cf4": cv2.imread(os.path.join(asset_path, "player_cf4.jpg")),
+    "rwf1": cv2.imread(os.path.join(asset_path, "player_rwf1.jpg")),
+    "rwf2": cv2.imread(os.path.join(asset_path, "player_rwf2.jpg")),
+    "rwf3": cv2.imread(os.path.join(asset_path, "player_rwf3.jpg")),
+    "rwf4": cv2.imread(os.path.join(asset_path, "player_rwf4.jpg"))
 }
-
-# Memeriksa apakah gambar dimuat dengan benar
+# Check if images are loaded correctly
 for player, image in player_images.items():
     if image is None:
         print(f"Error loading image for {player}. Check the file path.")
@@ -175,7 +173,6 @@ positions = [
     {"name": "RWF", "options": ["rwf1", "rwf2", "rwf3", "rwf4"]}
 ]
 
-# Fungsi utama untuk menjalankan program
 def main():
     cap = cv2.VideoCapture(0)
     selected_players = []
@@ -187,7 +184,7 @@ def main():
     stability_threshold = 5
     stable_count = 0
     previous_angle_direction = None
-    confirmed_selection = False  # Variabel baru untuk melacak konfirmasi pemilihan
+    confirmed_selection = False  # New variable to track confirmation
 
     selected_options = {}  # Store selected options for each position
 
